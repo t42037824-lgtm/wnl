@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>WNL – Pesan Anonim</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/canvas-confetti/1.9.3/confetti.browser.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<style>
+  :root{--c1:#ff4d8d;--c2:#7c3aed;--c3:#22d3ee;--c4:#fb923c;}
+  body[data-theme="ocean"]{--c1:#06b6d4;--c2:#2563eb;--c3:#34d399;--c4:#a78bfa;}
+  body[data-theme="sunset"]{--c1:#f43f5e;--c2:#f97316;--c3:#facc15;--c4:#ec4899;}
+  html,body{height:100%}
+  body{font-family:'Plus Jakarta Sans',system-ui,sans-serif;color:#fff;overflow-x:hidden;
+    background:linear-gradient(125deg,var(--c1),var(--c2),var(--c3),var(--c4));background-size:400% 400%;
+    animation:flow 18s ease-in-out infinite;transition:background .6s;
+    padding:env(safe-area-inset-top,0) 0 env(safe-area-inset-bottom,0)}
+  @keyframes flow{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
+  .blob{position:fixed;border-radius:50%;filter:blur(60px);opacity:.55;z-index:0;pointer-events:none;animation:drift 14s ease-in-out infinite}
+  .blob.a{width:340px;height:340px;background:var(--c3);top:-80px;left:-80px}
+  .blob.b{width:420px;height:420px;background:var(--c1);bottom:-120px;right:-100px;animation-delay:-5s}
+  .blob.c{width:260px;height:260px;background:var(--c4);top:40%;left:55%;animation-delay:-9s}
+  @keyframes drift{0%,100%{transform:translate(0,0) scale(1)}33%{transform:translate(60px,40px) scale(1.15)}66%{transform:translate(-40px,70px) scale(.92)}}
+  .glass{background:rgba(255,255,255,.16);backdrop-filter:blur(22px) saturate(160%);-webkit-backdrop-filter:blur(22px) saturate(160%);
+    border:1px solid rgba(255,255,255,.35);box-shadow:0 8px 32px rgba(31,38,135,.25),inset 0 1px 0 rgba(255,255,255,.5)}
+  .glass-in{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.3);color:#fff;outline:none;transition:.2s}
+  .glass-in::placeholder{color:rgba(255,255,255,.7)}
+  .glass-in:focus{background:rgba(255,255,255,.26);border-color:#fff;box-shadow:0 0 0 4px rgba(255,255,255,.18)}
+  .btn{background:#fff;color:#6d28d9;font-weight:800;border-radius:1rem;transition:transform .15s,box-shadow .2s;box-shadow:0 6px 20px rgba(0,0,0,.18)}
+  .btn:hover{transform:translateY(-2px)}.btn:active{transform:scale(.97)}.btn:disabled{opacity:.7;cursor:not-allowed}
+  .btn-g{background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.4);color:#fff;font-weight:700;border-radius:1rem;transition:.2s}
+  .btn-g:hover{background:rgba(255,255,255,.32)}
+  .pro{background:linear-gradient(110deg,#f59e0b 20%,#fff7c2 40%,#f59e0b 60%);background-size:200% 100%;animation:shimmer 2.2s linear infinite;
+    color:#5b3a00;font-weight:800;font-size:.7rem;padding:.2rem .6rem;border-radius:999px;box-shadow:0 0 14px rgba(251,191,36,.7)}
+  @keyframes shimmer{to{background-position:-200% 0}}
+  .spin-dice{animation:dice .6s cubic-bezier(.4,1.4,.5,1)}
+  @keyframes dice{to{transform:rotate(720deg) scale(1.2)}}
+  .pop{animation:pop .35s cubic-bezier(.2,1.3,.4,1)}
+  @keyframes pop{from{opacity:0;transform:translateY(12px) scale(.96)}to{opacity:1;transform:none}}
+  .toast{animation:tin .35s cubic-bezier(.2,1.2,.4,1) forwards}
+  .toast.out{animation:tout .3s ease forwards}
+  @keyframes tin{from{opacity:0;transform:translateY(-24px) scale(.95)}to{opacity:1;transform:none}}
+  @keyframes tout{to{opacity:0;transform:translateY(-16px)}}
+  .hidden-v{display:none!important}
+  ::-webkit-scrollbar{width:6px}::-webkit-scrollbar-thumb{background:rgba(255,255,255,.4);border-radius:9px}
+  @media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;animation-iteration-count:1!important}}
+</style>
+</head>
+<body data-theme="candy">
+<div class="blob a"></div><div class="blob b"></div><div class="blob c"></div>
+<div id="toasts" class="fixed left-0 right-0 z-[100] flex flex-col items-center gap-2 px-4 pointer-events-none" style="top:calc(env(safe-area-inset-top,0px) + 12px)"></div>
+
+<main class="relative z-10 min-h-full flex items-center justify-center p-4">
+
+  <!-- LOGIN -->
+  <section id="v-login" class="hidden-v w-full max-w-md glass rounded-[2rem] p-7 pop">
+    <div class="text-center mb-6">
+      <div class="w-16 h-16 mx-auto mb-3 rounded-2xl bg-white/25 border border-white/40 flex items-center justify-center text-3xl"><i class="fa-solid fa-ghost"></i></div>
+      <h1 class="text-4xl font-extrabold tracking-tight">WNL</h1>
+      <p class="text-white/85 text-sm mt-1">Terima pesan anonim dari siapa saja.</p>
+    </div>
+    <form id="login-form" class="space-y-3" autocomplete="off">
+      <div class="relative">
+        <span class="absolute left-4 top-1/2 -translate-y-1/2 text-white/70 font-bold">@</span>
+        <input id="in-user" maxlength="20" placeholder="username kamu" class="glass-in w-full rounded-2xl py-3.5 pl-9 pr-4 font-semibold">
+      </div>
+      <div id="pw-wrap" class="hidden-v relative pop">
+        <i class="fa-solid fa-key absolute left-4 top-1/2 -translate-y-1/2 text-white/70"></i>
+        <input id="in-pass" type="password" placeholder="password WNL PRO" class="glass-in w-full rounded-2xl py-3.5 pl-11 pr-4 font-semibold">
+      </div>
+      <button class="btn w-full py-3.5" type="submit">Buka inbox</button>
+      <button id="btn-demo" type="button" class="btn-g w-full py-3"><i class="fa-solid fa-bolt mr-1"></i> Coba demo cepat</button>
+    </form>
+    <p class="text-center text-xs text-white/75 mt-5">Huruf kecil, angka, titik, dan garis bawah (3–20 karakter).</p>
+  </section>
+
+  <!-- DASHBOARD -->
+  <section id="v-dash" class="hidden-v w-full max-w-xl py-6 pop">
+    <div class="glass rounded-[2rem] p-5 mb-4">
+      <div class="flex items-center justify-between gap-3">
+        <div class="min-w-0">
+          <div class="flex items-center gap-2 flex-wrap">
+            <h2 id="d-name" class="text-2xl font-extrabold truncate"></h2>
+            <span id="d-pro" class="pro hidden-v"><i class="fa-solid fa-crown mr-1"></i>PRO</span>
+          </div>
+          <p class="text-white/80 text-sm">Inbox pesan anonim</p>
+        </div>
+        <button id="btn-settings" class="btn-g w-11 h-11 shrink-0" aria-label="Pengaturan"><i class="fa-solid fa-gear"></i></button>
+      </div>
+      <div class="mt-4 glass-in rounded-2xl p-3 flex items-center gap-2">
+        <i class="fa-solid fa-link text-white/80"></i>
+        <input id="d-link" readonly class="bg-transparent flex-1 min-w-0 text-sm font-semibold outline-none truncate">
+      </div>
+      <div class="grid grid-cols-2 gap-2 mt-3">
+        <button id="btn-copy" class="btn py-3"><i class="fa-regular fa-copy mr-1"></i> Salin link</button>
+        <button id="btn-share" class="btn-g py-3"><i class="fa-solid fa-share-nodes mr-1"></i> Bagikan</button>
+      </div>
+    </div>
+    <div class="flex items-center justify-between px-2 mb-2">
+      <h3 class="font-bold">Pesan masuk</h3>
+      <span id="d-count" class="text-xs bg-white/25 border border-white/30 rounded-full px-3 py-1 font-bold">0</span>
+    </div>
+    <div id="d-list" class="space-y-3 pb-8"></div>
+  </section>
+
+  <!-- KIRIM PESAN -->
+  <section id="v-send" class="hidden-v w-full max-w-md glass rounded-[2rem] p-6 pop">
+    <div class="text-center mb-4">
+      <div class="w-14 h-14 mx-auto mb-2 rounded-full bg-white/25 border border-white/40 flex items-center justify-center text-2xl font-extrabold" id="s-avatar">?</div>
+      <h2 class="text-xl font-extrabold">@<span id="s-to"></span></h2>
+      <p class="text-white/85 text-sm">kirim pesan anonim untukku 🤫</p>
+    </div>
+    <div class="relative">
+      <textarea id="s-text" rows="5" maxlength="500" placeholder="Tulis pesanmu di sini…" class="glass-in w-full rounded-2xl p-4 pr-14 font-medium resize-none"></textarea>
+      <button id="btn-dice" type="button" class="absolute top-3 right-3 w-10 h-10 rounded-xl bg-white/25 border border-white/40 hover:bg-white/40 transition" aria-label="Pertanyaan acak"><i class="fa-solid fa-dice text-lg"></i></button>
+      <span id="s-count" class="absolute bottom-3 right-4 text-xs text-white/70">0/500</span>
+    </div>
+    <input id="s-from" maxlength="30" placeholder="Nama Kamu (Opsional)" class="glass-in w-full rounded-2xl py-3.5 px-4 font-semibold mt-3">
+    <p class="text-xs text-white/75 mt-2 px-1"><i class="fa-solid fa-lock mr-1"></i> Nama hanya bisa dilihat penerima yang memakai WNL PRO.</p>
+    <button id="btn-send" class="btn w-full py-3.5 mt-4 flex items-center justify-center gap-2"><span id="send-label">Kirim pesan</span></button>
+    <a id="s-own" href="" class="block text-center text-sm font-semibold text-white/90 underline underline-offset-4 mt-4">Mau punya inbox sendiri? Buat di WNL</a>
+  </section>
+</main>
+
+<!-- MODAL BAGIKAN -->
+<div id="m-share" class="hidden-v fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/30 backdrop-blur-sm">
+  <div class="glass rounded-[2rem] w-full max-w-sm p-6 pop" style="background:rgba(60,30,120,.45)">
+    <div class="flex justify-between items-center mb-4"><h3 class="font-extrabold text-lg">Bagikan link inbox</h3><button data-close class="w-9 h-9 rounded-full bg-white/20" aria-label="Tutup"><i class="fa-solid fa-xmark"></i></button></div>
+    <div class="grid grid-cols-2 gap-3">
+      <button data-share="wa" class="btn-g py-4 flex flex-col items-center gap-1"><i class="fa-brands fa-whatsapp text-2xl text-green-300"></i><span class="text-xs">WhatsApp Chat</span></button>
+      <button data-share="was" class="btn-g py-4 flex flex-col items-center gap-1"><i class="fa-solid fa-circle-notch text-2xl text-emerald-300"></i><span class="text-xs">WhatsApp Status</span></button>
+      <button data-share="ig" class="btn-g py-4 flex flex-col items-center gap-1"><i class="fa-brands fa-instagram text-2xl text-pink-300"></i><span class="text-xs">Instagram Story</span></button>
+      <button data-share="tw" class="btn-g py-4 flex flex-col items-center gap-1"><i class="fa-brands fa-x-twitter text-2xl"></i><span class="text-xs">Twitter / X</span></button>
+    </div>
+    <button data-share="copy" class="btn w-full py-3 mt-3"><i class="fa-regular fa-copy mr-1"></i> Salin link manual</button>
+  </div>
+</div>
+
+<!-- MODAL PENGATURAN -->
+<div id="m-set" class="hidden-v fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/30 backdrop-blur-sm">
+  <div class="glass rounded-[2rem] w-full max-w-sm p-6 pop" style="background:rgba(60,30,120,.45)">
+    <div class="flex justify-between items-center mb-4"><h3 class="font-extrabold text-lg">Pengaturan</h3><button data-close class="w-9 h-9 rounded-full bg-white/20" aria-label="Tutup"><i class="fa-solid fa-xmark"></i></button></div>
+    <div class="glass-in rounded-2xl p-4 flex items-center justify-between mb-3">
+      <div><p class="text-xs text-white/75">Status akun</p><p id="set-user" class="font-bold"></p></div>
+      <span id="set-badge" class="text-xs font-bold bg-white/25 rounded-full px-3 py-1">FREE</span>
+    </div>
+    <button id="btn-theme" class="btn-g w-full py-3 mb-2"><i class="fa-solid fa-palette mr-1"></i> Ganti tema: <span id="theme-name">candy</span></button>
+    <button id="btn-logout" class="w-full py-3 rounded-2xl font-bold bg-red-500/70 border border-red-200/40 hover:bg-red-500/90 transition"><i class="fa-solid fa-right-from-bracket mr-1"></i> Keluar</button>
+    <div class="text-center text-xs text-white/80 mt-5 pt-4 border-t border-white/25">
+      <p>Creator / Developer: <b>Hermawan</b></p><p class="mt-0.5">App Version 2.0</p>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+import { getFirestore, collection, addDoc, query, where, onSnapshot, serverTimestamp }
+  from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+/* ====== KONFIGURASI FIREBASE (ganti dengan milikmu bila perlu) ====== */
+const firebaseConfig = {
+  apiKey: "AIzaSyDFipLWKjDtGn_aIMRe266YRXhVK5YEYZs",
+  authDomain: "anonymous-56ad1.firebaseapp.com",
+  projectId: "anonymous-56ad1",
+  storageBucket: "anonymous-56ad1.firebasestorage.app",
+  messagingSenderId: "546114562372",
+  appId: "1:546114562372:web:9ab66f5f9e929115c94f11",
+  measurementId: "G-MV26Y1MJRP"
+};
+const COL = "wnl_messages";
+const ADMIN = { user: "admin123", pass: "ujangrajinmengaji" };
+
+let db = null;
+try { db = getFirestore(initializeApp(firebaseConfig)); } catch (e) { console.error(e); }
+
+const $ = (id) => document.getElementById(id);
+const store = { get:(k)=>{try{return localStorage.getItem(k)}catch{return null}}, set:(k,v)=>{try{localStorage.setItem(k,v)}catch{}}, del:(k)=>{try{localStorage.removeItem(k)}catch{}} };
+const esc = (s) => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const baseUrl = () => location.origin + location.pathname;
+const inboxUrl = (u) => `${baseUrl()}?to=${encodeURIComponent(u)}`;
+
+/* ====== TOAST ====== */
+function toast(msg, type = "info") {
+  const cfg = { success:["bg-emerald-500 text-white","fa-circle-check"], error:["bg-red-500 text-white","fa-circle-exclamation"], info:["bg-white text-slate-800","fa-circle-info"] }[type] || [];
+  const el = document.createElement("div");
+  el.className = `toast pointer-events-auto ${cfg[0]} rounded-2xl px-4 py-3 shadow-2xl font-semibold text-sm flex items-center gap-2 max-w-sm`;
+  el.innerHTML = `<i class="fa-solid ${cfg[1]}"></i><span>${esc(msg)}</span>`;
+  $("toasts").appendChild(el);
+  setTimeout(() => { el.classList.add("out"); setTimeout(() => el.remove(), 320); }, 2800);
+}
+
+/* ====== STATE ====== */
+let user = store.get("wnl_user");
+let isPro = store.get("wnl_pro") === "1" && user === ADMIN.user;
+let unsub = null;
+const params = new URLSearchParams(location.search);
+const target = (params.get("to") || "").toLowerCase().replace(/[^a-z0-9_.]/g, "");
+
+function show(id) { ["v-login","v-dash","v-send"].forEach(v => $(v).classList.toggle("hidden-v", v !== id)); }
+const validUser = (u) => /^[a-z0-9_.]{3,20}$/.test(u);
+
+/* ====== TEMA ====== */
+const themes = ["candy","ocean","sunset"];
+function setTheme(t) { document.body.dataset.theme = t; store.set("wnl_theme", t); $("theme-name").textContent = t; }
+setTheme(themes.includes(store.get("wnl_theme")) ? store.get("wnl_theme") : "candy");
+$("btn-theme").onclick = () => setTheme(themes[(themes.indexOf(document.body.dataset.theme) + 1) % themes.length]);
+
+/* ====== LOGIN ====== */
+$("in-user").addEventListener("input", () => {
+  $("pw-wrap").classList.toggle("hidden-v", $("in-user").value.trim().toLowerCase() !== ADMIN.user);
+});
+function login(name, pro) {
+  user = name; isPro = pro;
+  store.set("wnl_user", name); pro ? store.set("wnl_pro", "1") : store.del("wnl_pro");
+  history.replaceState(null, "", baseUrl());
+  toast(pro ? "Selamat datang, WNL PRO!" : `Halo @${name}!`, "success");
+  openDash();
+}
+$("login-form").addEventListener("submit", (e) => {
+  e.preventDefault();
+  const name = $("in-user").value.trim().toLowerCase().replace(/^@/, "");
+  if (!validUser(name)) return toast("Username 3–20 karakter: huruf, angka, titik, atau garis bawah.", "error");
+  if (name === ADMIN.user) {
+    if ($("in-pass").value !== ADMIN.pass) return toast("Password salah. Coba lagi.", "error");
+    return login(name, true);
+  }
+  login(name, false);
+});
+$("btn-demo").onclick = () => login("demo", false);
+
+/* ====== DASHBOARD ====== */
+function openDash() {
+  show("v-dash");
+  $("d-name").textContent = "@" + user;
+  $("d-pro").classList.toggle("hidden-v", !isPro);
+  $("d-link").value = inboxUrl(user);
+  $("set-user").textContent = "@" + user;
+  $("set-badge").textContent = isPro ? "WNL PRO" : "FREE";
+  $("set-badge").className = isPro ? "pro" : "text-xs font-bold bg-white/25 rounded-full px-3 py-1";
+  listen();
+}
+function renderEmpty() {
+  $("d-list").innerHTML = `<div class="glass rounded-3xl p-8 text-center"><i class="fa-regular fa-envelope-open text-3xl mb-2"></i><p class="font-bold">Belum ada pesan</p><p class="text-sm text-white/80">Bagikan link inbox kamu supaya teman bisa mengirim pesan.</p></div>`;
+}
+function listen() {
+  if (unsub) unsub();
+  $("d-count").textContent = "0"; renderEmpty();
+  if (!db) return toast("Firebase belum terhubung. Periksa konfigurasi.", "error");
+  const q = query(collection(db, COL), where("to", "==", user));
+  unsub = onSnapshot(q, (snap) => {
+    const items = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+      .sort((a, b) => (b.ts?.seconds ?? 9e12) - (a.ts?.seconds ?? 9e12));
+    $("d-count").textContent = items.length;
+    if (!items.length) return renderEmpty();
+    $("d-list").innerHTML = items.map(m => {
+      const when = m.ts?.toDate ? m.ts.toDate().toLocaleString("id-ID", { day:"numeric", month:"short", hour:"2-digit", minute:"2-digit" }) : "baru saja";
+      const sender = isPro
+        ? `<span class="font-bold"><i class="fa-solid fa-user-secret mr-1 text-amber-200"></i>${esc(m.from || "Anonim")}</span>`
+        : `<span class="text-white/80">🔒 Pengirim tersembunyi • Khusus WNL PRO</span>`;
+      return `<article class="glass rounded-3xl p-4 pop"><p class="whitespace-pre-wrap break-words font-medium leading-relaxed">${esc(m.text)}</p>
+        <div class="flex justify-between items-center gap-2 mt-3 pt-3 border-t border-white/25 text-xs">${sender}<span class="text-white/70 shrink-0">${when}</span></div></article>`;
+    }).join("");
+  }, (err) => { console.error(err); toast("Gagal memuat pesan. Cek aturan Firestore.", "error"); });
+}
+
+/* ====== SALIN & BAGIKAN ====== */
+async function copyText(t) {
+  try { await navigator.clipboard.writeText(t); return true; }
+  catch { const a = document.createElement("textarea"); a.value = t; document.body.appendChild(a); a.select();
+    let ok = false; try { ok = document.execCommand("copy"); } catch {} a.remove(); return ok; }
+}
+$("btn-copy").onclick = async () => { const ok = await copyText(inboxUrl(user)); toast(ok ? "Link berhasil disalin!" : "Gagal menyalin link.", ok ? "success" : "error"); };
+const open = (id) => $(id).classList.remove("hidden-v");
+const close = (id) => $(id).classList.add("hidden-v");
+$("btn-share").onclick = () => open("m-share");
+$("btn-settings").onclick = () => open("m-set");
+document.querySelectorAll("[data-close]").forEach(b => b.onclick = () => { close("m-share"); close("m-set"); });
+["m-share","m-set"].forEach(id => $(id).addEventListener("click", (e) => { if (e.target.id === id) close(id); }));
+
+document.querySelectorAll("[data-share]").forEach(b => b.onclick = async () => {
+  const link = inboxUrl(user);
+  const text = `Kirim pesan anonim ke aku di WNL! 🤫 ${link}`;
+  const t = encodeURIComponent(text);
+  switch (b.dataset.share) {
+    case "wa":  window.open(`https://api.whatsapp.com/send?text=${t}`, "_blank"); break;
+    case "was": location.href = `whatsapp://send?text=${t}`; break;
+    case "ig":  await copyText(link); toast("Link disalin. Tempel sebagai stiker link di Story.", "info");
+                setTimeout(() => { location.href = "instagram://story-camera"; }, 700); break;
+    case "tw":  window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent("Kirim pesan anonim ke aku di WNL! 🤫")}&url=${encodeURIComponent(link)}`, "_blank"); break;
+    case "copy": { const ok = await copyText(link); toast(ok ? "Link berhasil disalin!" : "Gagal menyalin link.", ok ? "success" : "error"); break; }
+  }
+});
+
+/* ====== PENGATURAN / LOGOUT ====== */
+$("btn-logout").onclick = () => {
+  if (unsub) unsub(); unsub = null;
+  store.del("wnl_user"); store.del("wnl_pro"); user = null; isPro = false;
+  close("m-set"); $("in-user").value = ""; $("in-pass").value = ""; $("pw-wrap").classList.add("hidden-v");
+  show("v-login"); toast("Kamu sudah keluar.", "info");
+};
+
+/* ====== KIRIM PESAN (PUBLIK) ====== */
+const questions = [
+  "Apa rahasia terbesar yang belum pernah kamu ceritakan?","Siapa orang yang diam-diam kamu kagumi?","Apa hal paling memalukan yang pernah kamu alami?",
+  "Kalau bisa mengulang satu hari, hari yang mana?","Apa kesan pertamaku di matamu?","Apa yang paling kamu takutkan akhir-akhir ini?",
+  "Lagu apa yang selalu bikin kamu baper?","Kalau jujur, apa kekuranganku menurutmu?","Siapa yang terakhir kali bikin kamu senyum-senyum sendiri?",
+  "Apa mimpi yang masih kamu simpan sendiri?"
+];
+function openSend() {
+  show("v-send");
+  $("s-to").textContent = target;
+  $("s-avatar").textContent = target[0].toUpperCase();
+  $("s-own").href = baseUrl();
+}
+$("s-text").addEventListener("input", () => $("s-count").textContent = $("s-text").value.length + "/500");
+$("btn-dice").onclick = () => {
+  const d = $("btn-dice").firstElementChild;
+  d.classList.remove("spin-dice"); void d.offsetWidth; d.classList.add("spin-dice");
+  setTimeout(() => {
+    $("s-text").value = questions[Math.floor(Math.random() * questions.length)];
+    $("s-text").dispatchEvent(new Event("input")); $("s-text").focus();
+  }, 350);
+};
+$("btn-send").onclick = async () => {
+  const text = $("s-text").value.trim();
+  const from = $("s-from").value.trim();
+  if (text.length < 2) return toast("Tulis pesanmu dulu ya.", "error");
+  if (!db) return toast("Firebase belum terhubung. Periksa konfigurasi.", "error");
+  const btn = $("btn-send");
+  btn.disabled = true;
+  btn.innerHTML = `<svg class="animate-spin h-5 w-5" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" opacity=".25"/><path d="M4 12a8 8 0 018-8" stroke="currentColor" stroke-width="4" stroke-linecap="round"/></svg><span>Mengirim…</span>`;
+  try {
+    await addDoc(collection(db, COL), { to: target, text, from: from || "", ts: serverTimestamp() });
+    confetti({ particleCount: 140, spread: 80, origin: { y: .7 } });
+    setTimeout(() => confetti({ particleCount: 70, angle: 60, spread: 60, origin: { x: 0, y: .8 } }), 200);
+    setTimeout(() => confetti({ particleCount: 70, angle: 120, spread: 60, origin: { x: 1, y: .8 } }), 200);
+    toast("Pesan terkirim secara anonim!", "success");
+    $("s-text").value = ""; $("s-from").value = ""; $("s-count").textContent = "0/500";
+  } catch (err) {
+    console.error(err); toast("Gagal mengirim pesan. Coba lagi.", "error");
+  } finally {
+    btn.disabled = false; btn.innerHTML = `<span id="send-label">Kirim pesan</span>`;
+  }
+};
+
+/* ====== INIT ====== */
+if (target && validUser(target)) openSend();
+else if (user && validUser(user)) openDash();
+else show("v-login");
+</script>
+</body>
+</html>
